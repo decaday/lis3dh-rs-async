@@ -120,6 +120,17 @@ where
         Lis3dh { core }
     }
 
+    /// Read available FIFO samples in one SPI transaction, oldest first.
+    /// FIFO must be enabled. Buffer length must be a multiple of six, at most
+    /// 192 bytes. On a bus error, discard the buffer without retrying.
+    pub async fn read_fifo_bytes(&mut self, buf: &mut [u8]) -> Result<(), Error<ESPI>> {
+        assert!(buf.len() <= 32 * 6 && buf.len() % 6 == 0);
+        if buf.is_empty() {
+            return Ok(());
+        }
+        self.core.read_multiple_regs(Register::OUT_X_L, buf).await
+    }
+
     pub async fn new_spi_with_config(spi: SPI, config: Configuration) -> Result<Self, Error<ESPI>> {
         let core = Lis3dhSPI { spi };
 
